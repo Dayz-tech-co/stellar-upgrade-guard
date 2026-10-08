@@ -1,0 +1,16 @@
+[package]
+name = "guard-core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+soroban-spec.workspace = true
+stellar-xdr.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile = "3.23.0"
