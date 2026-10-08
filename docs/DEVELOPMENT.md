@@ -39,6 +39,19 @@ fixtures/
 docs/
 ```
 
+## Repository CI
+
+The repository CI workflow runs the local quality gate on pull requests and pushes to `main`:
+
+```text
+cargo fmt --check
+cargo check --workspace
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+CI uses stable Rust, Cargo caching, and committed offline fixtures. It does not require live Stellar RPC or Testnet access.
+
 ## Build
 
 ```text
@@ -87,6 +100,34 @@ cargo check --workspace
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 ```
+
+## GitHub Action Development
+
+The reusable action lives in `action/` and is implemented as a composite action. It builds `stellar-upgrade-guard` from the action repository, runs the CLI in JSON mode, exposes stable count outputs, and returns the CLI exit code.
+
+For local command simulation, run the same fixture comparisons the action-test workflow uses:
+
+```text
+cargo run -p guard-cli -- compare --old fixtures/phase2/compatible-function-added/old.wasm --new fixtures/phase2/compatible-function-added/new.wasm
+cargo run -p guard-cli -- compare --old fixtures/phase2/breaking-return-type-changed/old.wasm --new fixtures/phase2/breaking-return-type-changed/new.wasm
+```
+
+Expected results:
+
+- compatible fixture: exit `0`;
+- breaking fixture: exit `1`.
+
+`.github/workflows/action-test.yml` validates the composite action against those same committed Phase 2 fixtures. The intentionally breaking action step uses `continue-on-error` and then verifies that the step outcome is `failure`.
+
+The action is targeted at GitHub-hosted Ubuntu runners first. It relies on Rust and Python being available on the runner; the action installs stable Rust before building the CLI.
+
+For development examples, reference the action by commit SHA or branch:
+
+```yaml
+uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+```
+
+Do not create or document stable release tags until a release exists.
 
 ## Fixture Build
 
