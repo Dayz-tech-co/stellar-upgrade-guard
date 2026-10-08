@@ -1,0 +1,118 @@
+name: Stellar Upgrade Guard
+description: Compare Soroban contract interfaces and fail on breaking or unknown changes.
+
+inputs:
+  old-wasm:
+    description: Previous local WASM for local comparison mode.
+    required: false
+  new-wasm:
+    description: Candidate local WASM for local comparison mode.
+    required: false
+  contract-id:
+    description: Deployed Stellar contract id for deployed comparison mode.
+    required: false
+  candidate-wasm:
+    description: Candidate local WASM for deployed comparison mode.
+    required: false
+  network:
+    description: Stellar network for deployed comparison mode, such as testnet.
+    required: false
+  rpc-url:
+    description: Explicit Stellar RPC URL for deployed comparison mode.
+    required: false
+
+outputs:
+  result:
+    description: Compatibility result from the CLI JSON report.
+    value: ${{ steps.compare.outputs.result }}
+  breaking-count:
+    description: Number of breaking findings.
+    value: ${{ steps.compare.outputs.breaking-count }}
+  unknown-count:
+    description: Number of unknown findings.
+    value: ${{ steps.compare.outputs.unknown-count }}
+  warning-count:
+    description: Number of warning findings.
+    value: ${{ steps.compare.outputs.warning-count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Stellar Upgrade Guard
+      shell: bash
+      run: |
+        set -euo pipefail
+        rustup toolchain install stable --profile minimal
+        rustup default stable
+        export CARGO_TARGET_DIR="${RUNNER_TEMP:-/tmp}/stellar-upgrade-guard-target"
+        cargo install --path "$GITHUB_ACTION_PATH/.." --bin stellar-upgrade-guard --locked --force
+
+    - name: Compare contract interfaces
+      id: compare
+      shell: bash
+      env:
+        INPUT_OLD_WASM: ${{ inputs.old-wasm }}
+        INPUT_NEW_WASM: ${{ inputs.new-wasm }}
+        INPUT_CONTRACT_ID: ${{ inputs.contract-id }}
+        INPUT_CANDIDATE_WASM: ${{ inputs.candidate-wasm }}
+        INPUT_NETWORK: ${{ inputs.network }}
+        INPUT_RPC_URL: ${{ inputs.rpc-url }}
+      run: |
+        set -euo pipefail
+
+        json_file="$(mktemp)"
+        err_file="$(mktemp)"
+        mode_file="$(mktemp)"
+
+        local_mode=false
+        deployed_mode=false
+        if [[ -n "$INPUT_OLD_WASM" || -n "$INPUT_NEW_WASM" ]]; then
+          local_mode=true
+        fi
+        if [[ -n "$INPUT_CONTRACT_ID" || -n "$INPUT_CANDIDATE_WASM" || -n "$INPUT_NETWORK" || -n "$INPUT_RPC_URL" ]]; then
+          deployed_mode=true
+        fi
+
+        if [[ "$local_mode" == true && "$deployed_mode" == true ]]; then
+          echo "error: local WASM inputs and deployed contract inputs are mutually exclusive" >&2
+          exit 2
+        fi
+
+        args=(compare)
+        if [[ "$local_mode" == true ]]; then
+          if [[ -z "$INPUT_OLD_WASM" || -z "$INPUT_NEW_WASM" ]]; then
+            echo "error: local mode requires old-wasm and new-wasm" >&2
+            exit 2
+          fi
+          args+=(--old "$INPUT_OLD_WASM" --new "$INPUT_NEW_WASM")
+          echo "local" > "$mode_file"
+        elif [[ "$deployed_mode" == true ]]; then
+          if [[ -z "$INPUT_CONTRACT_ID" || -z "$INPUT_CANDIDATE_WASM" ]]; then
+            echo "error: deployed mode requires contract-id and candidate-wasm" >&2
+            exit 2
+          fi
+          if [[ -z "$INPUT_NETWORK" && -z "$INPUT_RPC_URL" ]]; then
+            echo "error: deployed mode requires network or rpc-url" >&2
+            exit 2
+          fi
+          args+=(--contract "$INPUT_CONTRACT_ID" --candidate "$INPUT_CANDIDATE_WASM")
+          if [[ -n "$INPUT_NETWORK" ]]; then
+            args+=(--network "$INPUT_NETWORK")
+          fi
+          if [[ -n "$INPUT_RPC_URL" ]]; then
+            args+=(--rpc-url "$INPUT_RPC_URL")
+          fi
+          echo "deployed" > "$mode_file"
+        else
+          echo "error: provide either old-wasm/new-wasm or contract-id/candidate-wasm" >&2
+          exit 2
+        fi
+
+        args+=(--format json)
+
+        set +e
+        stellar-upgrade-guard "${args[@]}" > "$json_file" 2> "$err_file"
+        status=$?
+        set -e
+
+        python "$GITHUB_ACTION_PATH/render_result.py" "$status" "$json_file" "$err_file" "$mode_file"

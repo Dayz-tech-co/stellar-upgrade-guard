@@ -72,6 +72,29 @@ cargo run -p guard-cli -- compare --contract <CONTRACT_ID> --candidate candidate
 
 `--contract`/`--candidate` mode is mutually exclusive with local `--old`/`--new` mode. The built-in `testnet` network resolves to Stellar's public testnet RPC endpoint. Mainnet comparison requires `--rpc-url` so callers choose their provider explicitly.
 
+## GitHub Action
+
+This repository provides a composite GitHub Action at `action/` for external Soroban projects. Until stable tags exist, reference a commit SHA or development branch:
+
+```yaml
+- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+  with:
+    old-wasm: ./artifacts/old.wasm
+    new-wasm: ./artifacts/new.wasm
+```
+
+Deployed contract comparison:
+
+```yaml
+- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+  with:
+    contract-id: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    candidate-wasm: ./target/wasm32v1-none/release/contract.wasm
+    network: testnet
+```
+
+The action preserves CLI exit behavior: exit `1` fails the step for breaking or unknown interface changes, and exit `2` fails the step for tooling, input, RPC, or parsing errors. It does not prove storage migration safety, runtime behavior, authorization behavior, deployment safety, or upgrade safety.
+
 ## Current Rule Coverage
 
 Implemented rule categories:
