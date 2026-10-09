@@ -1,0 +1,43 @@
+name: Feature Request
+description: Propose a focused improvement.
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the smallest useful version of the feature.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - compatibility engine
+        - parser/normalization
+        - Stellar RPC
+        - GitHub Action
+        - documentation
+        - packaging/release
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints or risks
+      description: Note compatibility, determinism, security, or CI concerns.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

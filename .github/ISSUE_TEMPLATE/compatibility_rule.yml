@@ -1,0 +1,58 @@
+name: Compatibility Rule
+description: Propose or challenge a compatibility classification.
+title: "compatibility: "
+labels: ["compatibility-rule"]
+body:
+  - type: textarea
+    id: old_interface
+    attributes:
+      label: Old interface
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: new_interface
+    attributes:
+      label: New interface
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Proposed classification
+      options:
+        - compatible
+        - warning
+        - breaking
+        - unknown
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Stellar/Soroban evidence
+      description: Link or quote the relevant SDK, XDR, Stellar docs, or observed behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: XDR/spec references
+      description: Include affected XDR/spec entries or SDK types where relevant.
+  - type: input
+    id: finding_code
+    attributes:
+      label: Expected finding code
+      placeholder: "return_type_changed"
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Reproduction fixture
+      description: Describe the old/new fixture pair or minimal WASM reproduction.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes

@@ -1,9 +1,13 @@
 [package]
 name = "guard-rpc"
 version = "0.1.0"
+description = "Stellar RPC support for fetching deployed Soroban contract WASM for Stellar Upgrade Guard"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
+keywords = ["stellar", "soroban", "rpc", "wasm"]
+categories = ["api-bindings", "development-tools"]
 
 [dependencies]
 async-trait.workspace = true

@@ -1,9 +1,13 @@
 [package]
 name = "guard-cli"
 version = "0.1.0"
+description = "CLI for inspecting and comparing Soroban contract interfaces"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
+keywords = ["stellar", "soroban", "cli", "wasm"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "stellar-upgrade-guard"

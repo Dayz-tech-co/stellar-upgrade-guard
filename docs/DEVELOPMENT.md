@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- Rust stable with Cargo.
-- For fixture WASM builds, Rust 1.84 or newer with the `wasm32v1-none` target.
+- Rust 1.91.0 or newer with Cargo.
+- For fixture WASM builds, Rust 1.91.0 or newer with the `wasm32v1-none` target.
 - Stellar CLI v25.2.0 or newer for Soroban SDK v28 contract builds.
 
 Install the contract build target:
@@ -124,7 +124,7 @@ The action is targeted at GitHub-hosted Ubuntu runners first. It relies on Rust 
 For development examples, reference the action by commit SHA or branch:
 
 ```yaml
-uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+uses: DayzLabs/stellar-upgrade-guard/action@<commit-sha>
 ```
 
 Do not create or document stable release tags until a release exists.

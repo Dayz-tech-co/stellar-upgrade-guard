@@ -23,12 +23,13 @@ resolver = "2"
 [workspace.package]
 edition = "2024"
 license = "Apache-2.0"
-repository = "https://github.com/Dayz-tech-co/stellar-upgrade-guard"
+repository = "https://github.com/DayzLabs/stellar-upgrade-guard"
+rust-version = "1.91"
 
 [workspace.dependencies]
 clap = { version = "4.5.48", features = ["derive"] }
-guard-core = { path = "crates/guard-core" }
-guard-rpc = { path = "crates/guard-rpc" }
+guard-core = { version = "0.1.0", path = "crates/guard-core" }
+guard-rpc = { version = "0.1.0", path = "crates/guard-rpc" }
 async-trait = "0.1.89"
 hex = "0.4.3"
 reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls"] }

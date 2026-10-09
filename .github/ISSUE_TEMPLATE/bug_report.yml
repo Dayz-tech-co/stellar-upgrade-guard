@@ -1,0 +1,50 @@
+name: Bug Report
+description: Report incorrect behavior, crashes, or confusing output.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: CLI version, action reference, or commit SHA.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04, macOS 15, Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command or workflow step
+      description: Include the exact command or action inputs, with secrets removed.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction WASM or fixture
+      description: Attach or describe a minimal WASM reproduction if safe to share. Do not upload private contracts if they contain sensitive information.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs with RPC headers, API keys, private keys, and secrets removed.
+      render: text
