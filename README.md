@@ -1,37 +1,62 @@
 # Stellar Upgrade Guard
 
-Early-stage open-source tooling for inspecting Soroban contract specifications and detecting deterministic interface compatibility changes.
+Stellar Upgrade Guard is early-stage open-source tooling for inspecting Soroban contract interfaces and detecting deterministic interface compatibility changes before a contract upgrade reaches users.
 
-The current Phase 3 capability is intentionally scoped: the CLI can inspect a compiled Soroban WASM file, extract its official `contractspecv0` interface data, compare two local WASM interfaces, compare a deployed contract against a candidate WASM through Stellar RPC, and report structured findings. It does not prove runtime behavior, authorization behavior, storage migration safety, or that an upgrade is safe.
+It can compare:
 
-## Build
+- two local compiled Soroban WASM files; or
+- a deployed Stellar contract's current WASM against a local candidate WASM through Stellar RPC.
+
+It does not prove storage migration safety, authorization behavior, runtime behavior, deployment safety, or complete upgrade safety.
+
+## Current Status
+
+The project is preparing for an initial `v0.1.0` release. Current functionality is useful for CI guardrails, but compatibility semantics are intentionally conservative and pre-1.0 APIs may change.
+
+## Why This Exists
+
+Soroban contract upgrades can accidentally remove functions, change argument shapes, change return types, or alter user-defined types. Stellar Upgrade Guard provides a deterministic interface check that can fail CI before those changes are merged.
+
+## Installation
+
+Requires Rust 1.91.0 or newer.
+
+From a source checkout:
 
 ```text
-cargo check --workspace
+cargo install --path crates/guard-cli --locked
 ```
+
+From Git:
+
+```text
+cargo install --git https://github.com/DayzLabs/stellar-upgrade-guard --locked --bin stellar-upgrade-guard
+```
+
+The project is not yet published to crates.io and does not yet publish binary release artifacts.
 
 ## Inspect A WASM
 
 ```text
-cargo run -p guard-cli -- inspect path/to/contract.wasm
+stellar-upgrade-guard inspect path/to/contract.wasm
 ```
 
 For JSON:
 
 ```text
-cargo run -p guard-cli -- inspect path/to/contract.wasm --format json
+stellar-upgrade-guard inspect path/to/contract.wasm --format json
 ```
 
-## Compare Two WASM Files
+## Compare Two Local WASM Files
 
 ```text
-cargo run -p guard-cli -- compare --old old.wasm --new new.wasm
+stellar-upgrade-guard compare --old old.wasm --new new.wasm
 ```
 
 For JSON:
 
 ```text
-cargo run -p guard-cli -- compare --old old.wasm --new new.wasm --format json
+stellar-upgrade-guard compare --old old.wasm --new new.wasm --format json
 ```
 
 Example text output:
@@ -61,13 +86,13 @@ Result: BREAKING
 ## Compare A Deployed Contract
 
 ```text
-cargo run -p guard-cli -- compare --contract <CONTRACT_ID> --candidate candidate.wasm --network testnet
+stellar-upgrade-guard compare --contract <CONTRACT_ID> --candidate candidate.wasm --network testnet
 ```
 
 Use `--rpc-url` to supply an explicit RPC endpoint:
 
 ```text
-cargo run -p guard-cli -- compare --contract <CONTRACT_ID> --candidate candidate.wasm --rpc-url https://example-rpc.invalid
+stellar-upgrade-guard compare --contract <CONTRACT_ID> --candidate candidate.wasm --rpc-url https://example-rpc.invalid
 ```
 
 `--contract`/`--candidate` mode is mutually exclusive with local `--old`/`--new` mode. The built-in `testnet` network resolves to Stellar's public testnet RPC endpoint. Mainnet comparison requires `--rpc-url` so callers choose their provider explicitly.
@@ -77,7 +102,7 @@ cargo run -p guard-cli -- compare --contract <CONTRACT_ID> --candidate candidate
 This repository provides a composite GitHub Action at `action/` for external Soroban projects. Until stable tags exist, reference a commit SHA or development branch:
 
 ```yaml
-- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+- uses: DayzLabs/stellar-upgrade-guard/action@<commit-sha>
   with:
     old-wasm: ./artifacts/old.wasm
     new-wasm: ./artifacts/new.wasm
@@ -86,14 +111,20 @@ This repository provides a composite GitHub Action at `action/` for external Sor
 Deployed contract comparison:
 
 ```yaml
-- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+- uses: DayzLabs/stellar-upgrade-guard/action@<commit-sha>
   with:
     contract-id: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     candidate-wasm: ./target/wasm32v1-none/release/contract.wasm
     network: testnet
 ```
 
-The action preserves CLI exit behavior: exit `1` fails the step for breaking or unknown interface changes, and exit `2` fails the step for tooling, input, RPC, or parsing errors. It does not prove storage migration safety, runtime behavior, authorization behavior, deployment safety, or upgrade safety.
+The action preserves CLI exit behavior and fails workflows on exit `1` or `2`. See [action/README.md](action/README.md) for inputs, outputs, and security notes.
+
+## Exit Codes
+
+- `0`: no breaking or unknown findings;
+- `1`: breaking or unknown findings detected;
+- `2`: input, parsing, RPC, or tool failure.
 
 ## Current Rule Coverage
 
@@ -106,21 +137,22 @@ Implemented rule categories:
 - unions: added, removed, case added/removed, case payload changed;
 - events: added, removed, parameters changed, data format changed.
 
-Conservative classifications are used where Soroban compatibility semantics need more fixture validation. Unknown findings currently cause the compare command to exit non-zero.
+Conservative classifications are used where Soroban compatibility semantics need more evidence. Unknown findings currently cause `compare` to exit non-zero.
 
-## Exit Codes
+## Limitations
 
-- `0`: no breaking or unknown findings;
-- `1`: breaking or unknown findings detected;
-- `2`: input, parsing, or execution failure.
+Stellar Upgrade Guard only compares interface metadata extracted from Soroban WASM or fetched through Stellar RPC. It does not analyze:
 
-## Test
+- storage migrations;
+- authorization behavior;
+- runtime behavior;
+- deployment configuration;
+- contract initialization state;
+- whether an upgrade is safe for a particular protocol.
 
-```text
-cargo test --workspace
-```
+## Development
 
-Full local checks:
+Run the local quality gate:
 
 ```text
 cargo fmt --check
@@ -129,4 +161,23 @@ cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for prerequisites, fixture instructions, and repository structure.
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for prerequisites, fixture instructions, action development, and repository structure.
+
+## Contributing
+
+Contributions are welcome, especially fixtures, parser fixes, reporting improvements, docs, and evidence-backed compatibility rules. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Larger semantic or architecture changes should begin with an issue or design discussion.
+
+## Security
+
+Do not open public issues for real vulnerabilities. See [SECURITY.md](SECURITY.md) for private reporting guidance and secret-handling expectations.
+
+## Roadmap And Release Readiness
+
+- [ROADMAP.md](ROADMAP.md)
+- [CHANGELOG.md](CHANGELOG.md)
+- [docs/V0_1_RELEASE_READINESS.md](docs/V0_1_RELEASE_READINESS.md)
+- [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

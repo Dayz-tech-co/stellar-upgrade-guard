@@ -25,14 +25,14 @@ Local WASM inputs are mutually exclusive with deployed contract inputs. Deployed
 Use a commit SHA or development branch until stable tags exist.
 
 ```yaml
-- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+- uses: DayzLabs/stellar-upgrade-guard/action@<commit-sha>
   with:
     old-wasm: ./artifacts/old.wasm
     new-wasm: ./artifacts/new.wasm
 ```
 
 ```yaml
-- uses: Dayz-tech-co/stellar-upgrade-guard/action@<commit-sha>
+- uses: DayzLabs/stellar-upgrade-guard/action@<commit-sha>
   with:
     contract-id: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     candidate-wasm: ./target/wasm32v1-none/release/contract.wasm
