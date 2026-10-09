@@ -157,6 +157,59 @@ fn normalizes_composite_and_primitive_types_without_flattening() {
                     name: string_m("Account"),
                 }),
             },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("nested_option"),
+                type_: ScSpecTypeDef::Option(Box::new(ScSpecTypeOption {
+                    value_type: Box::new(ScSpecTypeDef::Vec(Box::new(ScSpecTypeVec {
+                        element_type: Box::new(ScSpecTypeDef::U32),
+                    }))),
+                })),
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("nested_map"),
+                type_: ScSpecTypeDef::Map(Box::new(ScSpecTypeMap {
+                    key_type: Box::new(ScSpecTypeDef::Address),
+                    value_type: Box::new(ScSpecTypeDef::Vec(Box::new(ScSpecTypeVec {
+                        element_type: Box::new(ScSpecTypeDef::U64),
+                    }))),
+                })),
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("nested_user_type"),
+                type_: ScSpecTypeDef::Option(Box::new(ScSpecTypeOption {
+                    value_type: Box::new(ScSpecTypeDef::Udt(ScSpecTypeUdt {
+                        name: string_m("Account"),
+                    })),
+                })),
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("signed_32"),
+                type_: ScSpecTypeDef::I32,
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("signed_64"),
+                type_: ScSpecTypeDef::I64,
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("unsigned_128"),
+                type_: ScSpecTypeDef::U128,
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("signed_256"),
+                type_: ScSpecTypeDef::I256,
+            },
+            ScSpecFunctionInputV0 {
+                doc: string_m(""),
+                name: string_m("unsigned_256"),
+                type_: ScSpecTypeDef::U256,
+            },
         ])
         .expect("bounded inputs"),
         outputs: VecM::try_from(vec![ScSpecTypeDef::Bytes]).expect("bounded outputs"),
@@ -168,6 +221,8 @@ fn normalizes_composite_and_primitive_types_without_flattening() {
     );
 
     let interface = parse_contract_interface(&wasm).expect("composite spec parses");
+    let repeated_interface = parse_contract_interface(&wasm).expect("composite spec parses again");
+    assert_eq!(interface, repeated_interface);
     let inputs = &interface.functions[0].inputs;
 
     assert_eq!(inputs[0].type_ref, TypeRef("Option<u32>".to_owned()));
@@ -179,6 +234,21 @@ fn normalizes_composite_and_primitive_types_without_flattening() {
     );
     assert_eq!(inputs[4].type_ref, TypeRef("Result<u64, Error>".to_owned()));
     assert_eq!(inputs[5].type_ref, TypeRef("Account".to_owned()));
+    assert_eq!(inputs[6].type_ref, TypeRef("Option<Vec<u32>>".to_owned()));
+    assert_eq!(
+        inputs[7].type_ref,
+        TypeRef("Map<Address, Vec<u64>>".to_owned())
+    );
+    assert_eq!(inputs[8].type_ref, TypeRef("Option<Account>".to_owned()));
+    assert_eq!(inputs[9].type_ref, TypeRef("i32".to_owned()));
+    assert_eq!(inputs[10].type_ref, TypeRef("i64".to_owned()));
+    assert_eq!(inputs[11].type_ref, TypeRef("u128".to_owned()));
+    assert_eq!(inputs[12].type_ref, TypeRef("i256".to_owned()));
+    assert_eq!(inputs[13].type_ref, TypeRef("u256".to_owned()));
+    assert_eq!(
+        serde_json::to_value(&inputs[6].type_ref).expect("nested type serializes"),
+        serde_json::Value::String("Option<Vec<u32>>".to_owned())
+    );
     assert_eq!(
         interface.functions[0].outputs,
         vec![TypeRef("Bytes".to_owned())]
